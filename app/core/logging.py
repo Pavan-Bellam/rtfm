@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 import json
-from datetime import datetime
+from datetime import datetime,timezone
 from typing import Any, Dict
 
 
@@ -21,7 +21,7 @@ class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
 
         log_data: Dict[str, Any] = {
-            "timestamp" : datetime, #change this
+            "timestamp" : datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -39,7 +39,7 @@ class JsonFormatter(logging.Formatter):
             log_data.update(record.extra_fields) #not sure if record has this filed
 
 
-        return json.dumps(log_data)   
+        return json.dumps(log_data, default=str )   
 
 
 
@@ -116,7 +116,7 @@ def setup_logging(
         )
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(formatter)
-        error_handler.filter(ContextFilter())
+        error_handler.addFilter(ContextFilter())
         root_logger.addHandler(error_handler)
 
     #silence noisy third party logs

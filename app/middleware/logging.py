@@ -70,7 +70,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             return response
 
         except Exception as e:
-            duration = time.time - start_time
+            duration = time.time() - start_time
 
             logger.error(
                 "Request Failed",
