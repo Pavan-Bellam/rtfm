@@ -1,0 +1,123 @@
+# ========================================
+# Python
+# ========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+
+# Build & distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+.installed.cfg
+*.manifest
+*.spec
+
+# Package manager (uv / poetry)
+.uv/
+uv.lock
+poetry.lock
+poetry.toml
+.cache/
+__pypackages__/
+
+# Byte-compiled / temp files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+.DS_Store
+
+# ========================================
+# FastAPI / Uvicorn / Pytest / Coverage
+# ========================================
+# Local run logs
+*.pid
+*.db
+*.sqlite3
+*.sqlite
+
+# Testing / coverage
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+pytest_cache/
+.cache/
+
+# ========================================
+# Environment & secrets
+# ========================================
+.env
+.env.*
+.envrc
+*.pem
+*.key
+*.crt
+*.secret
+*.token
+*.credentials
+
+# ========================================
+# IDEs and Editors
+# ========================================
+# VS Code
+.vscode/
+.history/
+*.code-workspace
+
+# PyCharm / JetBrains
+.idea/
+*.iml
+
+# ========================================
+# OS-specific
+# ========================================
+Thumbs.db
+Desktop.ini
+.DS_Store
+ehthumbs.db
+Icon?
+._*
+
+# ========================================
+# Project specific
+# ========================================
+# Raw data or uploads
+raw_data/
+uploads/
+data/
+logs/
+tmp/
+files/
+notebooks/
+
+
+
+# ========================================
+# Docker / Deployment
+# ========================================
+docker-compose.override.yml
+*.pid
+*.tar
+*.bak
+*.old
+
+# ========================================
+# Misc
+# ========================================
+# Ignore anything in backups or experiments
+backup*/
+experiments*/
