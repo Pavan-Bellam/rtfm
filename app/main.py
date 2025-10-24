@@ -6,17 +6,17 @@ import logging
 
 from app.core.logging import setup_logging, get_logger
 from app.middleware.logging import LoggingMiddleware
-
+from app.core.settings import settings
+from app.api.v1.rag import router as rag_router
+from app.api.v1.health import router as health_router
 
 # Set up logging
 #make these values dependent on env(Todo)
-log_level = "INFO"
-json_logs = True
-log_file= True
+
 setup_logging(
-    log_level=log_level, 
-    json_logs=json_logs, 
-    log_file=log_file
+    log_level=settings.LOG_LEVEL, 
+    json_logs=settings.JSON_LOGS, 
+    log_file=settings.LOG_FILE
 )
 
 logger = get_logger(__name__)
@@ -44,6 +44,10 @@ app = FastAPI(
 
 #Add logging middleware
 app.add_middleware(LoggingMiddleware)
+
+# Include routers
+app.include_router(rag_router, prefix="/api/v1/rag", tags=["RAG"])
+app.include_router(health_router, prefix="/api/v1/health", tags=["Health"])
 
 # Global exception handler
 @app.exception_handler(Exception)

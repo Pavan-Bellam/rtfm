@@ -25,8 +25,6 @@ class JsonFormatter(logging.Formatter):
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
-            "module": record.module,
-            "function": record.funcName,
             "line": record.lineno,
         }
 
@@ -36,7 +34,7 @@ class JsonFormatter(logging.Formatter):
 
         #add extra fields if available
         if hasattr(record, "extra_fields"):
-            log_data.update(record.extra_fields) #not sure if record has this filed
+            log_data.update(record.extra_fields)
 
 
         return json.dumps(log_data, default=str )   
