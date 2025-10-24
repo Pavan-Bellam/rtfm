@@ -148,7 +148,7 @@ async def scrape(tool_name: str, url: str, limit: int):
         docs = await firecrawl.crawl(
             url=url,
             limit=limit,
-            scrape_options={'formats': ['markdown']}
+            scrape_options={'formats': ['markdown'], "onlyMainContent" : True}
         )
 
         scraping_duration = time.time() - start_time
