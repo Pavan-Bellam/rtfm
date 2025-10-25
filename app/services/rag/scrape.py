@@ -36,10 +36,7 @@ def save_document(idx: int, obj: Document, markdown_dir: Path, metadata_dir: Pat
     try:
         url = obj.metadata.url or f"doc_{idx}"
         doc_id = hashlib.md5(url.encode()).hexdigest()[:12]
-
-        safe_title = obj.metadata.title or f"doc_{idx}"
-        safe_title = safe_title.replace("/", "-").replace(r"\\", "-").replace(":", "-")[:50]
-        base_filename = f"{idx:04d}_{doc_id}_{safe_title}"
+        base_filename = f"{idx:04d}_{doc_id}"
 
         logger.debug(f"Saving document {idx}: {base_filename}", extra={
             "extra_fields": {
@@ -151,7 +148,7 @@ async def scrape(tool_name: str, url: str, limit: int):
         docs = await firecrawl.crawl(
             url=url,
             limit=limit,
-            scrape_options={'formats': ['markdown']}
+            scrape_options={'formats': ['markdown'], "onlyMainContent" : True}
         )
 
         scraping_duration = time.time() - start_time

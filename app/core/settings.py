@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     LOG_LEVEL: Optional[str] = "INFO"
     JSON_LOGS: Optional[bool] = True
     LOG_FILE: Optional[bool]= True
+    OPENAI_API_KEY: Optional[str] = None
+    DEEPSEEK_API_KEY: Optional[str] = None
+    CHUNK_SIZE: Optional[int] = 500
+    SPLIT_SIZE: Optional[int] = 20_000
 
     @property
     def ROOT_DIR(self):

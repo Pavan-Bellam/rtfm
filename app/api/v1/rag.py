@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from app.schema.rag import ScrapeResponse, ScrapeRequest
-from app.services.scrape import scrape as scrape_service
+from app.services.rag.scrape import scrape as scrape_service
 from app.core.logging import get_logger
 from pydantic import ValidationError
 
