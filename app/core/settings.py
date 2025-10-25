@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     CHUNK_SIZE: Optional[int] = 500
     SPLIT_SIZE: Optional[int] = 20_000
 
+    DATABASE_URL: str
+    DB_POOL_SIZE: Optional[int] = 5
+    DB_MAX_OVERFLOW: Optional[int] = 10
+
     @property
     def ROOT_DIR(self):
         return Path(__file__).resolve().parent.parent.parent
@@ -28,6 +32,11 @@ class Settings(BaseSettings):
     def RAW_DATA_STORAGE_URL(self):
         if self.ENVIRONMENT=='dev':
             return self.ROOT_DIR / "raw_data"
+    
+    @property
+    def DATABASE_URL_SYNC(self):
+        db_url = self.DATABASE_URL.replace('asyncpg','psycopg2')
+        return db_url
 
 
 settings = Settings()
