@@ -1,8 +1,7 @@
 import asyncio
-from pathlib import Path
-from typing import List, Optional
-from tempfile import NamedTemporaryFile
 import shutil
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 from app.core.logging import get_logger
 from app.core.settings import settings
@@ -20,28 +19,27 @@ def number_file(file_path: Path) -> None:
         FileNotFoundError, PermissionError,  UnicodeError, shutil.Error, OSError
     """
     try:
-        with open(file_path, "r", encoding="utf-8") as src, NamedTemporaryFile("w", delete=False, encoding='utf-8') as tmp:
+        with open(file_path, encoding="utf-8") as src, NamedTemporaryFile("w", delete=False, encoding='utf-8') as tmp:
             chars_count = 0
             code_block = False
-            code_block_start_line = None
-            
+
             for i, line in enumerate(src, 1):
                 new_line = f"#{i}: {line}"
-                
+
                 # Check for code block BEFORE deciding to split
                 if "```" in line:
                     code_block = not code_block
-                
+
                 # Check if we should split BEFORE writing this line
                 estimated_tokens = chars_count // 4
                 if estimated_tokens > settings.SPLIT_SIZE and not code_block:
                     tmp.write("<Chunk_Break>\n")
                     chars_count = 0
-                
+
                 # Now write the line
                 tmp.write(new_line)
                 chars_count += len(new_line)
-            
+
             # Warn if code block never closed
             if code_block:
                 logger.warning(
@@ -55,7 +53,7 @@ def number_file(file_path: Path) -> None:
 
         shutil.move(tmp.name, file_path)
 
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         logger.error(
             "file not found",
             exc_info=True,
@@ -67,7 +65,7 @@ def number_file(file_path: Path) -> None:
         )
         raise
 
-    except PermissionError as e:
+    except PermissionError:
         logger.error(
             "Permission denied for the file",
             exc_info=True,
@@ -79,7 +77,7 @@ def number_file(file_path: Path) -> None:
         )
         raise
 
-    except UnicodeError as e:
+    except UnicodeError:
         logger.error(
             "Encoding issue",
             exc_info=True,
@@ -90,7 +88,7 @@ def number_file(file_path: Path) -> None:
             }
         )
         raise
-    except shutil.Error as e:
+    except shutil.Error:
         logger.error(
             "I/O issue with shuttule",
             exc_info=True,
@@ -101,7 +99,7 @@ def number_file(file_path: Path) -> None:
             }
         )
         raise
-    except OSError as e:
+    except OSError:
         logger.error(
             "I/O issue",
             exc_info=True,
@@ -117,7 +115,7 @@ def number_file(file_path: Path) -> None:
         if tmp and Path(tmp.name).exists():
             try:
                 Path(tmp.name).unlink()
-            except Exception as cleanup_error:
+            except Exception:
                 logger.warning(
                     "Failed to remove temp file",
                     exc_info=True,
@@ -129,17 +127,17 @@ def number_file(file_path: Path) -> None:
                 )
 
 
-async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optional[str] = None) -> None:
+async def number_files(files_list: list[Path] | None = None, files_dir: str | None = None) -> None:
     """
     Add line numbers to multiple files either from a provided list or by discovering files in a directory.
-    
+
     Args:
         files_list: Optional list of file paths to process
         files_dir: Optional directory path to discover and process files from
-        
+
     Returns:
         None
-        
+
     Raises:
         ValueError: If both parameters are None or both are provided
         FileNotFoundError: If the directory doesn't exist
@@ -151,14 +149,14 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
         if files_list is None and files_dir is None:
             logger.error("Both files_list and files_dir are None")
             raise ValueError("Either files_list or files_dir must be provided, not both None")
-        
+
         if files_list is not None and files_dir is not None:
             logger.error("Both files_list and files_dir are provided")
             raise ValueError("Provide either files_list or files_dir, not both")
-        
+
         # Determine which files to process
-        files_to_process: List[Path] = []
-        
+        files_to_process: list[Path] = []
+
         if files_list is not None:
             # Validate that all files in the list exist
             for file_path in files_list:
@@ -185,7 +183,7 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
                     )
                     raise ValueError(f"Path is not a file: {file_path}")
             files_to_process = files_list
-            
+
         elif files_dir is not None:
             # Validate directory exists and is accessible
             dir_path = Path(files_dir)
@@ -200,7 +198,7 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
                     }
                 )
                 raise FileNotFoundError(f"Directory not found: {files_dir}")
-            
+
             if not dir_path.is_dir():
                 logger.error(
                     "Path is not a directory",
@@ -212,7 +210,7 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
                     }
                 )
                 raise ValueError(f"Path is not a directory: {files_dir}")
-            
+
             # Discover files in the directory (recursively)
             try:
                 files_to_process = [f for f in dir_path.rglob("*") if f.is_file()]
@@ -226,7 +224,7 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
                         }
                     )
                     return
-            except PermissionError as e:
+            except PermissionError:
                 logger.error(
                     "Permission denied accessing directory",
                     exc_info=True,
@@ -237,7 +235,7 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
                     }
                 )
                 raise
-            except OSError as e:
+            except OSError:
                 logger.error(
                     "OS error accessing directory",
                     exc_info=True,
@@ -248,7 +246,7 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
                     }
                 )
                 raise
-        
+
         # Process files asynchronously
         if not files_to_process:
             logger.warning(
@@ -261,7 +259,7 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
                 }
             )
             return
-            
+
         logger.info(
             "Processing files",
             extra={
@@ -270,16 +268,16 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
                 }
             }
         )
-        
+
         # Create tasks for processing files
         number_files_tasks = [
-            asyncio.to_thread(number_file, file_path) 
+            asyncio.to_thread(number_file, file_path)
             for file_path in files_to_process
         ]
-        
+
         # Execute all tasks and collect results
         results = await asyncio.gather(*number_files_tasks, return_exceptions=True)
-        
+
         # Check for any exceptions in the results
         failed_files = []
         for i, result in enumerate(results):
@@ -295,7 +293,7 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
                         }
                     }
                 )
-        
+
         if failed_files:
             logger.warning(
                 "Some files failed to process",
@@ -315,7 +313,7 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
                     }
                 }
             )
-            
+
     except ValueError as e:
         logger.error(
             "Invalid input parameters",
@@ -360,7 +358,7 @@ async def number_files(files_list: Optional[List[Path]] = None, files_dir: Optio
             }
         )
         raise
-    except Exception as e:
+    except Exception:
         logger.error(
             "Unexpected error while numbering files",
             exc_info=True,

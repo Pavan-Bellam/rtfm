@@ -1,5 +1,6 @@
+
 from pydantic import BaseModel, Field
-from typing import List, Optional
+
 
 #chunking Agent
 class Chunk(BaseModel):
@@ -16,12 +17,12 @@ class ChunkingAgentOutput(BaseModel):
     A list of Chunk objects
     """
 
-    chunks: List[Chunk] = Field(..., description="List of chunks derived from the input text")
+    chunks: list[Chunk] = Field(..., description="List of chunks derived from the input text")
 
 
 class ChunkingAgentState(BaseModel):
-    input_text: Optional[str] = Field(default=None, description="Input text that needs to be chunked by the agent")
-    chunks: Optional[List[Chunk]] = Field(default=None, description="List of chunks derived from the input text")
-    messages: Optional[List] = Field(default_factory=list, description="Conversation history for the agent")
-    validation_errors: Optional[List[dict]] = Field(default_factory=list, description="List of validation errors found in chunks")
-    retry_count: Optional[int] = Field(default=0, description="Number of retry attempts for fixing chunks")
+    input_text: str | None = Field(default=None, description="Input text that needs to be chunked by the agent")
+    chunks: list[Chunk] | None = Field(default=None, description="List of chunks derived from the input text")
+    messages: list | None = Field(default_factory=list, description="Conversation history for the agent")
+    validation_errors: list[dict] | None = Field(default_factory=list, description="List of validation errors found in chunks")
+    retry_count: int | None = Field(default=0, description="Number of retry attempts for fixing chunks")

@@ -1,13 +1,10 @@
-from decimal import Context
-import logging
-from string import Formatter
-import sys
-from pathlib import Path
-from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 import json
-from datetime import datetime,timezone
-from typing import Any, Dict
-
+import logging
+import sys
+from datetime import UTC, datetime
+from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+from pathlib import Path
+from typing import Any
 
 LOGS_DIR = Path("logs")
 LOGS_DIR.mkdir(exist_ok=True)
@@ -20,8 +17,8 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
 
-        log_data: Dict[str, Any] = {
-            "timestamp" : datetime.now(timezone.utc).isoformat(),
+        log_data: dict[str, Any] = {
+            "timestamp" : datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -37,7 +34,7 @@ class JsonFormatter(logging.Formatter):
             log_data.update(record.extra_fields)
 
 
-        return json.dumps(log_data, default=str )   
+        return json.dumps(log_data, default=str )
 
 
 
@@ -96,7 +93,7 @@ def setup_logging(
             LOGS_DIR / "app.log",
             maxBytes=10*1024*1024, #10MB
             backupCount=5, #keep 5 backup files
-            encoding="utf-8" 
+            encoding="utf-8"
         )
         app_handler.setLevel(logging.DEBUG)
         app_handler.setFormatter(formatter)
@@ -107,7 +104,7 @@ def setup_logging(
         #Error logs - Rotating by time
         error_handler = TimedRotatingFileHandler(
             LOGS_DIR / "error.log",
-            when="midnight", 
+            when="midnight",
             interval=1,
             backupCount=30,
             encoding="utf-8"

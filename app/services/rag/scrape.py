@@ -1,13 +1,14 @@
 import asyncio
+import hashlib
+import json
+import time
+from pathlib import Path
+
 from firecrawl.v2.types import Document
+
 from app.core import settings
 from app.core.deps import firecrawl
-from app.core.settings import settings
 from app.core.logging import get_logger, setup_logging
-import json
-from pathlib import Path
-import hashlib
-import time
 
 setup_logging(
     log_level=settings.LOG_LEVEL,
@@ -85,7 +86,7 @@ def save_document(idx: int, obj: Document, markdown_dir: Path, metadata_dir: Pat
             }
         })
         raise
-    except OSError as e:
+    except OSError:
         logger.error(f"Failed to save document {idx} due to file system error", exc_info=True, extra={
             "extra_fields": {
                 "doc_index": idx,
@@ -121,7 +122,7 @@ async def scrape(tool_name: str, url: str, limit: int):
         OSError: If directory creation or file writing fails
         Exception: For Firecrawl API errors or network issues
     """
-    logger.info(f"Starting web scraping operation", extra={
+    logger.info("Starting web scraping operation", extra={
         "extra_fields": {
             "url": url,
             "limit": limit,
@@ -141,7 +142,7 @@ async def scrape(tool_name: str, url: str, limit: int):
     try:
         # Crawl web pages
         start_time = time.time()
-        logger.info(f"Starting Firecrawl crawl operation", extra={
+        logger.info("Starting Firecrawl crawl operation", extra={
             "extra_fields": {"url": url, "limit": limit}
         })
 
@@ -154,7 +155,7 @@ async def scrape(tool_name: str, url: str, limit: int):
         scraping_duration = time.time() - start_time
         docs_count = len(docs.data) if docs and docs.data else 0
 
-        logger.info(f"Crawling completed successfully", extra={
+        logger.info("Crawling completed successfully", extra={
             "extra_fields": {
                 "duration_seconds": round(scraping_duration, 4),
                 "pages_crawled": docs_count,
@@ -163,28 +164,28 @@ async def scrape(tool_name: str, url: str, limit: int):
         })
 
         if docs_count == 0:
-            logger.warning(f"No documents were crawled from URL", extra={
+            logger.warning("No documents were crawled from URL", extra={
                 "extra_fields": {"url": url, "limit": limit}
             })
 
         # Prepare storage directories
-        logger.info(f"Preparing storage directories for scraped data")
+        logger.info("Preparing storage directories for scraped data")
         saving_start_time = time.time()
-        data_dir = settings.RAW_DATA_STORAGE_URL
+        data_dir = settings.raw_data_storage_url
         markdown_dir = data_dir / tool_name / "markdown"
         metadata_dir = data_dir / tool_name / "metadata"
 
         try:
             markdown_dir.mkdir(parents=True, exist_ok=True)
             metadata_dir.mkdir(parents=True, exist_ok=True)
-            logger.debug(f"Storage directories created", extra={
+            logger.debug("Storage directories created", extra={
                 "extra_fields": {
                     "markdown_dir": str(markdown_dir),
                     "metadata_dir": str(metadata_dir)
                 }
             })
-        except OSError as e:
-            logger.error(f"Failed to create storage directories", exc_info=True, extra={
+        except OSError:
+            logger.error("Failed to create storage directories", exc_info=True, extra={
                 "extra_fields": {
                     "markdown_dir": str(markdown_dir),
                     "metadata_dir": str(metadata_dir),
@@ -194,7 +195,7 @@ async def scrape(tool_name: str, url: str, limit: int):
             raise
 
         # Save documents concurrently
-        logger.info(f"Starting parallel document save operation", extra={
+        logger.info("Starting parallel document save operation", extra={
             "extra_fields": {"document_count": docs_count}
         })
 
@@ -218,7 +219,7 @@ async def scrape(tool_name: str, url: str, limit: int):
             raise results[failed_saves[0]]
 
         saving_duration = time.time() - saving_start_time
-        logger.info(f"Document saving completed successfully", extra={
+        logger.info("Document saving completed successfully", extra={
             "extra_fields": {
                 "total_documents": docs_count,
                 "duration_seconds": round(saving_duration, 4),
@@ -232,18 +233,18 @@ async def scrape(tool_name: str, url: str, limit: int):
             "metadata_dir": metadata_dir
         }
 
-    except ValueError as e:
-        logger.error(f"Validation error in scrape operation", exc_info=True, extra={
+    except ValueError:
+        logger.error("Validation error in scrape operation", exc_info=True, extra={
             "extra_fields": {"error_type": "ValueError"}
         })
         raise
-    except OSError as e:
-        logger.error(f"File system error during scrape operation", exc_info=True, extra={
+    except OSError:
+        logger.error("File system error during scrape operation", exc_info=True, extra={
             "extra_fields": {"error_type": "OSError"}
         })
         raise
     except Exception as e:
-        logger.error(f"Unexpected error during scrape operation", exc_info=True, extra={
+        logger.error("Unexpected error during scrape operation", exc_info=True, extra={
             "extra_fields": {
                 "url": url,
                 "tool_name": tool_name,

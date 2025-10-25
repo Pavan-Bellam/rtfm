@@ -1,14 +1,10 @@
-from ast import Call
-from gc import callbacks
-from platform import java_ver
+import logging
 import time
 import uuid
-from typing import Callable
-from fastapi import Request, Response
-from fastapi.datastructures import Headers
-from starlette.middleware.base import BaseHTTPMiddleware
-import logging
+from collections.abc import Callable
 
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +33,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                     "method": request.method,
                     "url": str(request.url),
                     "client_host": request.client.host if request.client else None,
-                    "user_agent": request.headers.get("user-agent") 
+                    "user_agent": request.headers.get("user-agent")
                 }
             }
         )
@@ -54,7 +50,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "Request completed",
                 extra={
                     "extra_fields":{
-                        "request_id": request_id, 
+                        "request_id": request_id,
                         "method": request.method,
                         "url": str(request.url),
                         "status_code": response.status_code,

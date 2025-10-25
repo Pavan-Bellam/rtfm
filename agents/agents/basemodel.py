@@ -1,12 +1,13 @@
-from typing import Literal, Optional, Any, Dict, List, Type
 from abc import ABC, abstractmethod
-from langchain_openai import ChatOpenAI
+from typing import Any, Literal
+
 from langchain_deepseek import ChatDeepSeek
+from langchain_openai import ChatOpenAI
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel
 
-from app.core.settings import settings
 from app.core.logging import get_logger
+from app.core.settings import settings
 
 logger = get_logger(__name__)
 
@@ -27,7 +28,7 @@ class AgentBaseModel(ABC):
         system_prompt: str,
         output_model: BaseModel,
         keep_history: bool = False,
-        model_config: Optional[Dict[str, Any]] = None
+        model_config: dict[str, Any] | None = None
     ):
         """
         Initialize the agent with LLM configuration and agent-specific settings.
@@ -59,12 +60,12 @@ class AgentBaseModel(ABC):
 
         # Initialize history if needed
         if self.keep_history:
-            self.history: List[Dict[str, Any]] = []
+            self.history: list[dict[str, Any]] = []
 
         # Initialize graph (to be implemented by subclasses)
         self.graph = self._get_graph()
 
-        logger.info(f"Agent initialized", extra={
+        logger.info("Agent initialized", extra={
             "extra_fields": {
                 "agent_name": self.name,
                 "provider": self.provider,
@@ -77,7 +78,7 @@ class AgentBaseModel(ABC):
         self,
         provider: Literal["openai", "deepseek"],
         model: str,
-        model_config: Dict[str, Any]
+        model_config: dict[str, Any]
     ) -> ChatOpenAI | ChatDeepSeek:
         """
         Initialize and return the appropriate LLM client based on provider.
@@ -100,7 +101,7 @@ class AgentBaseModel(ABC):
                 })
                 raise ValueError("OPENAI_API_KEY is not configured. Please set it in environment variables.")
 
-            logger.debug(f"Initializing OpenAI LLM", extra={
+            logger.debug("Initializing OpenAI LLM", extra={
                 "extra_fields": {"model": model, "config": model_config}
             })
             return ChatOpenAI(
@@ -116,7 +117,7 @@ class AgentBaseModel(ABC):
                 })
                 raise ValueError("DEEPSEEK_API_KEY is not configured. Please set it in environment variables.")
 
-            logger.debug(f"Initializing DeepSeek LLM", extra={
+            logger.debug("Initializing DeepSeek LLM", extra={
                 "extra_fields": {"model": model, "config": model_config}
             })
             return ChatDeepSeek(
@@ -162,7 +163,7 @@ class AgentBaseModel(ABC):
         Clear the conversation history if history tracking is enabled.
         """
         if self.keep_history:
-            logger.info(f"Clearing history for agent", extra={
+            logger.info("Clearing history for agent", extra={
                 "extra_fields": {
                     "agent_name": self.name,
                     "previous_history_length": len(self.history)
@@ -170,6 +171,6 @@ class AgentBaseModel(ABC):
             })
             self.history.clear()
         else:
-            logger.warning(f"Attempted to clear history but keep_history is False", extra={
+            logger.warning("Attempted to clear history but keep_history is False", extra={
                 "extra_fields": {"agent_name": self.name}
             })

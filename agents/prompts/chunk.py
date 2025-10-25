@@ -46,7 +46,7 @@ You MUST return a JSON object with this EXACT structure:
   ]
 }
 
-"IMPORTANT: Context should describe what someone can LEARN from this chunk, not just what keywords appear. 
+"IMPORTANT: Context should describe what someone can LEARN from this chunk, not just what keywords appear.
 Only mention concepts that are actually explained, not just referenced or linked."
 
 CRITICAL VALIDATION RULES:

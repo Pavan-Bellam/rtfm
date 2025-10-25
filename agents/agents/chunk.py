@@ -1,15 +1,13 @@
-import asyncio
-from typing import Any, Optional, Dict, Literal
+from typing import Any, Literal
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel
-from app.core.logging import get_logger, setup_logging
+from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
+
 from agents.agents.basemodel import AgentBaseModel
 from agents.prompts.chunk import CHUNKING_AGENT_PROMPT, CHUNKING_FIX_PROMPT_TEMPLATE
 from agents.schema.rag import ChunkingAgentOutput, ChunkingAgentState
-
-from langgraph.graph import START, END, StateGraph
-from langgraph.graph.state import CompiledStateGraph
+from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -24,7 +22,7 @@ class ChunkingAgent(AgentBaseModel):
         self,
         provider: Literal["openai", "deepseek"] = "openai",
         model: str = "gpt-4o-mini",
-        model_config: Optional[Dict[str, Any]] = None
+        model_config: dict[str, Any] | None = None
     ):
         """
         Initialize the chunking agent.
@@ -290,7 +288,7 @@ class ChunkingAgent(AgentBaseModel):
 
         return graph.compile()
 
-    async def run(self, document: str, **kwargs) -> Dict[str, Any]:
+    async def run(self, document: str, **kwargs) -> dict[str, Any]:
         """
         Chunk a document into semantic units with validation and auto-fixing.
 
@@ -304,7 +302,7 @@ class ChunkingAgent(AgentBaseModel):
             - validation_errors: Any remaining validation errors (if max retries reached)
             - retry_count: Number of fix attempts made
         """
-        logger.info(f"Starting document chunking", extra={
+        logger.info("Starting document chunking", extra={
             "extra_fields": {
                 "document_length": len(document),
                 "total_lines": len(document.split('\n')),
@@ -317,7 +315,7 @@ class ChunkingAgent(AgentBaseModel):
         result = await self.graph.ainvoke(state)
 
         # Log final results
-        logger.info(f"Chunking complete", extra={
+        logger.info("Chunking complete", extra={
             "extra_fields": {
                 "chunks_generated": len(result.get("chunks", [])),
                 "retry_count": result.get("retry_count", 0),

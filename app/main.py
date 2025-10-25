@@ -1,21 +1,20 @@
-import json
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-import logging
 
-from app.core.logging import setup_logging, get_logger
-from app.middleware.logging import LoggingMiddleware
-from app.core.settings import settings
-from app.api.v1.rag import router as rag_router
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
 from app.api.v1.health import router as health_router
+from app.api.v1.rag import router as rag_router
+from app.core.logging import get_logger, setup_logging
+from app.core.settings import settings
+from app.middleware.logging import LoggingMiddleware
 
 # Set up logging
 #make these values dependent on env(Todo)
 
 setup_logging(
-    log_level=settings.LOG_LEVEL, 
-    json_logs=settings.JSON_LOGS, 
+    log_level=settings.LOG_LEVEL,
+    json_logs=settings.JSON_LOGS,
     log_file=settings.LOG_FILE
 )
 
@@ -29,7 +28,7 @@ async def lifespan(app: FastAPI):
     """
     # Start up
     logger.info("Application starting up")
-    
+
     yield
 
     # Shutdown
@@ -67,7 +66,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         },
         exc_info=True
     )
-    
+
     return JSONResponse(
         status_code=500,
         content={

@@ -1,17 +1,13 @@
-from sqlalchemy.ext.asyncio import ( 
-    create_async_engine,
-    AsyncSession, 
-    async_sessionmaker,
-    AsyncEngine
-)
+from collections.abc import AsyncGenerator
+
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
-from typing import AsyncGenerator
 
 from app.core.settings import settings
 
 engine: AsyncEngine = create_async_engine(
     settings.DATABASE_URL,
-    echo= True if settings.ENVIRONMENT=='dev' else False,  # Only log SQL in debug mode
+    echo= settings.ENVIRONMENT=='dev',  # Only log SQL in debug mode
     pool_size=settings.DB_POOL_SIZE,  # Default: 5
     max_overflow=settings.DB_MAX_OVERFLOW,  # Default: 10
     pool_pre_ping=True,  # Verify connections before using
