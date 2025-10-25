@@ -15,3 +15,57 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "sqlalchemy>=2.0.44",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8.4",
+]
+
+[tool.ruff]
+# Set the maximum line length
+line-length = 120
+
+# Assume Python 3.12
+target-version = "py312"
+
+# Exclude common directories
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "venv",
+    "env",
+    ".env",
+    "alembic/versions",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+# Enable pycodestyle (E), Pyflakes (F), isort (I), and other useful rules
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "SIM",   # flake8-simplify
+]
+
+# Ignore specific rules
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "agents"]
+
+[tool.ruff.format]
+# Use double quotes for strings
+quote-style = "double"
+
+# Indent with spaces
+indent-style = "space"
