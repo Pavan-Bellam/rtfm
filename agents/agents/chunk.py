@@ -332,39 +332,3 @@ class ChunkingAgent(AgentBaseModel):
         }
 
 
-async def main():
-    # Setup logging first
-    setup_logging(
-        log_level="INFO",
-        json_logs=False,  # Set to False for readable console output during testing
-        log_file=True
-    )
-
-    logger.info("Starting chunking agent test")
-
-    chunking_agent = ChunkingAgent(
-        provider='openai',
-        model='gpt-5-nano'
-    )
-
-    file_path = 'D:/work/rtfm/raw_data/terraform-aws/markdown/0000_53ecb043cc47.md'
-    logger.info(f"Reading file: {file_path}")
-
-    with open(file_path, 'r', encoding='utf-8') as f:
-        data = f.read()
-
-    result = await chunking_agent.run(document=data)
-
-    logger.info("Writing results to file")
-
-    # Convert Chunk objects to dicts
-    result["chunks"] = [chunk.model_dump() for chunk in result["chunks"]]
-
-    with open('chunking_agent_result.json', "w", encoding='utf-8') as f:
-        import json
-        json.dump(result["chunks"], f, indent=2)
-
-    logger.info("Chunking complete!")
-
-if __name__=="__main__":
-    asyncio.run(main())    
