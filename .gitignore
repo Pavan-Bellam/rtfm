@@ -123,3 +123,4 @@ experiments*/
 
 #Ignore temperorily, Using only for db
 *docker*
+*.sql
