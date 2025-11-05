@@ -6,7 +6,7 @@ from pathlib import Path
 
 from firecrawl.v2.types import Document
 
-from app.core import settings
+from app.core.settings import settings
 from app.core.deps import firecrawl
 from app.core.logging import get_logger, setup_logging
 
@@ -19,34 +19,27 @@ setup_logging(
 logger = get_logger(__name__)
 
 
-def save_document(idx: int, obj: Document, markdown_dir: Path, metadata_dir: Path) -> None:
+def save_document(idx: int, tool_name: str, obj: Document, markdown_dir: Path, metadata_dir: Path) -> None:
     """
     Save a scraped document to markdown and JSON metadata files.
     Creates unique filenames based on document URL hash and sanitized title.
 
     Args:
         idx: Document index in the crawl results
+        tool_name: Name identifier for the tool being documented
         obj: Document object containing markdown content and metadata
         markdown_dir: Directory path for saving markdown files
         metadata_dir: Directory path for saving metadata JSON files
 
     Raises:
-        OSError: If file writing fails due to permissions or disk issues
         UnicodeEncodeError: If document contains invalid unicode characters
+        OSError: If file writing fails due to permissions or disk issues
+        Exception: For any other unexpected file writing errors
     """
     try:
         url = obj.metadata.url or f"doc_{idx}"
         doc_id = hashlib.md5(url.encode()).hexdigest()[:12]
         base_filename = f"{idx:04d}_{doc_id}"
-
-        logger.debug(f"Saving document {idx}: {base_filename}", extra={
-            "extra_fields": {
-                "doc_index": idx,
-                "doc_id": doc_id,
-                "url": url,
-                "title": obj.metadata.title
-            }
-        })
 
         # Save markdown file
         markdown_file = markdown_dir / f"{base_filename}.md"
@@ -55,25 +48,17 @@ def save_document(idx: int, obj: Document, markdown_dir: Path, metadata_dir: Pat
 
         # Save metadata as JSON
         json_obj = {
-            'markdown': obj.markdown,
-            "metadata": {
-                "title": obj.metadata.title,
-                "description": obj.metadata.description,
-                "url": obj.metadata.url,
-                "keywords": obj.metadata.keywords
-            }
+            "title": obj.metadata.title,
+            "description": obj.metadata.description,
+            "url": obj.metadata.url,
+            "keywords": obj.metadata.keywords,
+            "tool_name": tool_name
+
         }
 
         metadata_file = metadata_dir / f"{base_filename}.json"
         with open(metadata_file, "w", encoding="utf-8") as f:
             json.dump(json_obj, f, indent=2, ensure_ascii=False)
-
-        logger.debug(f"Successfully saved document {idx}", extra={
-            "extra_fields": {
-                "markdown_file": str(markdown_file),
-                "metadata_file": str(metadata_file)
-            }
-        })
 
     except UnicodeEncodeError as e:
         logger.error(f"Failed to save document {idx} due to unicode encoding error", exc_info=True, extra={
@@ -115,12 +100,13 @@ async def scrape(tool_name: str, url: str, limit: int):
         limit: Maximum number of pages to scrape
 
     Returns:
-        dict: Contains 'markdown_dir' and 'metadata_dir' paths as Path objects
+        dict: Contains 'markdown_dir', 'metadata_dir' paths as Path objects, and 'pages_scraped' count
 
     Raises:
-        ValueError: If parameters are invalid (empty tool_name, invalid URL, limit <= 0)
+        ValueError: If tool_name is empty or limit <= 0
         OSError: If directory creation or file writing fails
-        Exception: For Firecrawl API errors or network issues
+        UnicodeEncodeError: If documents contain invalid unicode characters
+        Exception: For Firecrawl API errors, network issues, or document saving failures
     """
     logger.info("Starting web scraping operation", extra={
         "extra_fields": {
@@ -169,7 +155,6 @@ async def scrape(tool_name: str, url: str, limit: int):
             })
 
         # Prepare storage directories
-        logger.info("Preparing storage directories for scraped data")
         saving_start_time = time.time()
         data_dir = settings.raw_data_storage_url
         markdown_dir = data_dir / tool_name / "markdown"
@@ -178,12 +163,6 @@ async def scrape(tool_name: str, url: str, limit: int):
         try:
             markdown_dir.mkdir(parents=True, exist_ok=True)
             metadata_dir.mkdir(parents=True, exist_ok=True)
-            logger.debug("Storage directories created", extra={
-                "extra_fields": {
-                    "markdown_dir": str(markdown_dir),
-                    "metadata_dir": str(metadata_dir)
-                }
-            })
         except OSError:
             logger.error("Failed to create storage directories", exc_info=True, extra={
                 "extra_fields": {
@@ -195,24 +174,21 @@ async def scrape(tool_name: str, url: str, limit: int):
             raise
 
         # Save documents concurrently
-        logger.info("Starting parallel document save operation", extra={
-            "extra_fields": {"document_count": docs_count}
-        })
-
         save_tasks = [
-            asyncio.to_thread(save_document, idx, obj, markdown_dir, metadata_dir)
+            asyncio.to_thread(save_document, idx, tool_name, obj, markdown_dir, metadata_dir)
             for idx, obj in enumerate(docs.data)
         ]
 
         results = await asyncio.gather(*save_tasks, return_exceptions=True)
 
         # Check for any failed saves
-        failed_saves = [i for i, r in enumerate(results) if isinstance(r, Exception)]
+        failed_saves = [r for i, r in enumerate(results) if isinstance(r, Exception)]
         if failed_saves:
             logger.error(f"Failed to save {len(failed_saves)} documents", extra={
                 "extra_fields": {
                     "failed_indices": failed_saves,
-                    "total_documents": docs_count
+                    "total_documents": docs_count, 
+                    "errors": set(failed_saves)
                 }
             })
             # Re-raise the first exception
@@ -230,7 +206,8 @@ async def scrape(tool_name: str, url: str, limit: int):
 
         return {
             "markdown_dir": markdown_dir,
-            "metadata_dir": metadata_dir
+            "metadata_dir": metadata_dir,
+            "pages_scraped": docs_count
         }
 
     except ValueError:
@@ -258,4 +235,4 @@ async def scrape(tool_name: str, url: str, limit: int):
 if __name__ == "__main__":
 
     print("starting asyncio run")
-    asyncio.run(scrape("fastapi", url="https://fastapi.tiangolo.com/", limit=1))
+    asyncio.run(scrape("terraform-aws", url="https://registry.terraform.io/providers/hashicorp/aws/latest/docs", limit=200))
