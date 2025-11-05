@@ -1,9 +1,13 @@
-from fastapi import APIRouter, HTTPException, status
+from turtle import ht
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import ValidationError
 
 from app.core.logging import get_logger
-from app.schema.rag import ScrapeRequest, ScrapeResponse
+from app.core.db import get_db
+from app.schema.rag import ScrapeRequest, ScrapeResponse, IngestionRequest, IngestionResponse
 from app.services.rag.scrape import scrape as scrape_service
+from app.services.rag.ingest import ingest as ingest_service
 
 router = APIRouter()
 
@@ -141,3 +145,97 @@ async def scrape(req: ScrapeRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while processing your request"
         ) from e
+
+
+@router.post(
+    '/ingest',
+    description="Crawls from the base url, save webpages as files, chunks them and saves metadata and embedding in db",
+    response_model=IngestionResponse,
+    status_code=status.HTTP_200_OK
+)
+async def ingest_data(req: IngestionRequest, db: AsyncSession = Depends(get_db)):
+    """
+    API endpoint to ingest web content: scrape, chunk, embed, and store in database.
+
+    Args:
+        req: IngestionRequest containing tool_name, url, and page limit
+        db: Database session
+
+    Returns:
+        IngestionResponse: Statistics about the ingestion process
+
+    Raises:
+        HTTPException 400: For validation errors or invalid input parameters
+        HTTPException 500: For server errors during ingestion
+    """
+    logger.info("Received ingest request", extra={
+        "extra_fields": {
+            "tool_name": req.tool_name,
+            "url": str(req.url),
+            "limit": req.limit
+        }
+    })
+
+    try:
+        result = await ingest_service(
+            tool_name=req.tool_name,
+            url=str(req.url),
+            limit=req.limit,
+            db=db
+        )
+
+        logger.info("Ingest request completed successfully", extra={
+            "extra_fields": {
+                "tool_name": req.tool_name,
+                "url": str(req.url),
+                "limit": req.limit,
+                **result
+            }
+        })
+
+        # Determine success message
+        if result['files_complete_failures'] == 0 and result['files_partial_failures'] == 0:
+            message = "Ingestion completed successfully"
+        elif result['files_complete_failures'] > 0 and result['files_success'] == 0:
+            message = "Ingestion completed with failures"
+        else:
+            message = "Ingestion completed with partial failures"
+
+        return IngestionResponse(
+            message=message,
+            pages_scraped=result['pages_scraped'],
+            files_processed=result['files_processed'],
+            files_success=result['files_success'],
+            files_partial_failures=result['files_partial_failures'],
+            files_complete_failures=result['files_complete_failures'],
+            total_chunks_created=result['total_chunks_created'],
+            markdown_dir=result['markdown_dir'],
+            metadata_dir=result['metadata_dir']
+        )
+
+    except ValueError as ve:
+        logger.error("Invalid parameter in ingest request", exc_info=True, extra={
+            "extra_fields": {
+                "tool_name": req.tool_name,
+                "url": str(req.url),
+                "error_type": "ValueError"
+            }
+        })
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ve)
+        )
+
+    except Exception as e:
+        logger.error("Unexpected error processing ingest request", exc_info=True, extra={
+            "extra_fields": {
+                "tool_name": req.tool_name,
+                "url": str(req.url),
+                "limit": req.limit,
+                "error_type": type(e).__name__
+            }
+        })
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred during ingestion"
+        )
