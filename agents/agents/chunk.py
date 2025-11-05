@@ -8,6 +8,7 @@ from agents.agents.basemodel import AgentBaseModel
 from agents.prompts.chunk import CHUNKING_AGENT_PROMPT, CHUNKING_FIX_PROMPT_TEMPLATE
 from agents.schema.rag import ChunkingAgentOutput, ChunkingAgentState
 from app.core.logging import get_logger
+from app.services.rag.utils import extract_line_range
 
 logger = get_logger(__name__)
 
@@ -31,46 +32,55 @@ class ChunkingAgent(AgentBaseModel):
             provider: LLM provider to use (default: "openai")
             model: Model identifier (default: "gpt-4o-mini")
             model_config: Optional model configuration (temperature, max_tokens, etc.)
+
+        Raises:
+            Exception: If agent initialization fails
         """
+        try:
+            # Call parent constructor
+            super().__init__(
+                name="chunking_agent",
+                description="Intelligently chunks documents into semantic units with context",
+                provider=provider,
+                model=model,
+                system_prompt=CHUNKING_AGENT_PROMPT,
+                output_model=ChunkingAgentOutput,
+                keep_history=False,
+                model_config=model_config
+            )
 
-        # Call parent constructor
-        super().__init__(
-            name="chunking_agent",
-            description="Intelligently chunks documents into semantic units with context",
-            provider=provider,
-            model=model,
-            system_prompt=CHUNKING_AGENT_PROMPT,
-            output_model=ChunkingAgentOutput,
-            keep_history=False,
-            model_config=model_config
-        )
+            logger.info("ChunkingAgent initialized successfully", extra={
+                "extra_fields": {
+                    "provider": provider,
+                    "model": model
+                }
+            })
 
-        logger.info(f"ChunkingAgent initialized with {provider}/{model}")
-
-    def _extract_line_range(self, text: str, start_line: int, end_line: int) -> str:
-        """
-        Extract a specific line range from text with line numbers.
-
-        Args:
-            text: The full input text
-            start_line: Starting line number (inclusive, 1-indexed)
-            end_line: Ending line number (inclusive, 1-indexed)
-
-        Returns:
-            Extracted text with line numbers formatted as #N: content
-        """
-        lines = text.split('\n')
-        extracted = []
-        for i in range(start_line - 1, min(end_line, len(lines))):
-            extracted.append(f"#{i+1}: {lines[i]}")
-        return '\n'.join(extracted)
+        except Exception as e:
+            logger.error("Failed to initialize ChunkingAgent", exc_info=True, extra={
+                "extra_fields": {
+                    "provider": provider,
+                    "model": model,
+                    "error_type": type(e).__name__
+                }
+            })
+            raise
 
     async def _call_model(self, state: ChunkingAgentState) -> ChunkingAgentState:
         """
         Call the LLM to generate chunks from the input text using message history.
+
+        Args:
+            state: Current chunking agent state with input text
+
+        Returns:
+            Updated state with generated chunks
+
+        Raises:
+            ValueError: If input text is None or empty
+            Exception: If LLM invocation fails
         """
-        if state.input_text is None:
-            logger.error("input text is empty while calling chunking agent")
+        if state.input_text is None or not state.input_text.strip():
             raise ValueError("Input text is empty while calling chunking agent")
 
         # Build messages with history
@@ -89,10 +99,17 @@ class ChunkingAgent(AgentBaseModel):
         result = await llm_with_structure.ainvoke(messages)
 
         # Store chunks and update message history
-        state.chunks = result.chunks if hasattr(result, 'chunks') else []
-        state.messages = messages  # Keep history for potential fixes
+        if not hasattr(result, 'chunks'):
+            logger.error("LLM result missing 'chunks' attribute", extra={
+                "extra_fields": {
+                    "result_type": type(result).__name__
+                }
+            })
+            state.chunks = []
+        else:
+            state.chunks = result.chunks
 
-        logger.info(f"Generated {len(state.chunks)} chunks")
+        state.messages = messages  # Keep history for potential fixes
 
         return state
 
@@ -100,21 +117,31 @@ class ChunkingAgent(AgentBaseModel):
         """
         Validate chunks for continuity and complete coverage.
         Sorts chunks, validates, and removes faulty chunks.
+
+        Args:
+            state: Current chunking agent state with chunks to validate
+
+        Returns:
+            Updated state with validation_errors populated
+
+        Raises:
+            ValueError: If input_text is missing from state
         """
+        # Validate input_text exists
+        if state.input_text is None or not state.input_text.strip():
+            raise ValueError("Input text is missing during validation")
+
         if not state.chunks:
             state.validation_errors = [{"type": "no_chunks", "message": "No chunks generated"}]
             return state
 
         # Sort chunks by start_line_number first
         state.chunks.sort(key=lambda c: c.start_line_number)
-        logger.debug(f"Sorted {len(state.chunks)} chunks by start_line_number")
 
         # Get total lines from input_text
         total_lines = len(state.input_text.split('\n'))
         issues = []
         chunks_to_remove = set()  # Track indices of chunks to delete
-
-        logger.debug(f"Validating {len(state.chunks)} chunks against {total_lines} total lines")
 
         # Check: First chunk starts at 1
         if state.chunks[0].start_line_number != 1:
@@ -165,25 +192,20 @@ class ChunkingAgent(AgentBaseModel):
             })
             chunks_to_remove.add(len(state.chunks) - 1)  # Delete last chunk, will be replaced
 
-        # Remove faulty chunks (overlaps)
+        # Remove faulty chunks
         if chunks_to_remove:
             state.chunks = [chunk for i, chunk in enumerate(state.chunks) if i not in chunks_to_remove]
-            logger.info(f"Removed {len(chunks_to_remove)} overlapping chunks")
 
         state.validation_errors = issues
-
-        if issues:
-            logger.warning(f"Found {len(issues)} validation issues", extra={
-                "extra_fields": {"issues": [i["type"] for i in issues]}
-            })
-        else:
-            logger.info("Chunks validated successfully - no issues found")
 
         return state
 
     def _should_fix(self, state: ChunkingAgentState) -> str:
         """
         Conditional function to decide if chunks need fixing or are valid.
+
+        Args:
+            state: Current chunking agent state with validation results
 
         Returns:
             "valid" if no errors or max retries reached, "fix" otherwise
@@ -193,20 +215,30 @@ class ChunkingAgent(AgentBaseModel):
 
         # Check retry count
         if state.retry_count >= 2:
-            logger.warning(f"Max retries ({state.retry_count}) reached, accepting chunks with errors")
             return "valid"
 
-        logger.info(f"Validation failed, attempting fix (retry {state.retry_count + 1}/2)")
         return "fix"
 
     async def _fix_gaps(self, state: ChunkingAgentState) -> ChunkingAgentState:
         """
         Generate chunks for missing/problematic regions.
         Each error is paired with its corresponding text region.
+
+        Args:
+            state: Current chunking agent state with validation errors
+
+        Returns:
+            Updated state with new chunks added
+
+        Raises:
+            ValueError: If input_text is missing from state
+            Exception: If LLM invocation fails
         """
         state.retry_count += 1
 
-        logger.info(f"Fixing {len(state.validation_errors)} validation issues (attempt {state.retry_count})")
+        # Validate input_text exists
+        if state.input_text is None or not state.input_text.strip():
+            raise ValueError("Input text is missing during gap fixing")
 
         # Build error-region pairs
         errors_with_regions = []
@@ -217,12 +249,17 @@ class ChunkingAgent(AgentBaseModel):
             # Extract text for the missing range
             if "missing_range" in issue:
                 start_line, end_line = issue["missing_range"]
-                region_text = self._extract_line_range(state.input_text, start_line, end_line)
+
+                # Use the imported extract_line_range function
+                region_text = extract_line_range(state.input_text, start_line, end_line)
 
                 errors_with_regions.append(
                     f"ERROR {i}:\n{error_msg}\n\n"
                     f"TEXT FOR ERROR {i} (lines {start_line}-{end_line}):\n{region_text}"
                 )
+
+        if not errors_with_regions:
+            return state
 
         separator = "\n\n" + "="*80 + "\n\n"
         combined_errors_regions = separator.join(errors_with_regions)
@@ -239,15 +276,19 @@ class ChunkingAgent(AgentBaseModel):
         llm_with_structure = self.llm.with_structured_output(self.output_model)
         result = await llm_with_structure.ainvoke(state.messages)
 
-        new_chunks = result.chunks if hasattr(result, 'chunks') else []
-
-        logger.info(f"Received {len(new_chunks)} new chunks for {len(state.validation_errors)} regions")
+        if not hasattr(result, 'chunks'):
+            logger.error("LLM result missing 'chunks' attribute during gap fixing", extra={
+                "extra_fields": {
+                    "result_type": type(result).__name__
+                }
+            })
+            new_chunks = []
+        else:
+            new_chunks = result.chunks
 
         # Add new chunks to existing chunks (validation will sort next)
         state.chunks.extend(new_chunks)
         state.validation_errors = []  # Clear errors for re-validation
-
-        logger.info(f"Total chunks after fix: {len(state.chunks)}")
 
         return state
 
@@ -261,6 +302,9 @@ class ChunkingAgent(AgentBaseModel):
 
         Returns:
             Compiled LangGraph for chunking operations
+
+        Raises:
+            Exception: If graph compilation fails
         """
         graph = StateGraph(ChunkingAgentState)
 
@@ -286,7 +330,9 @@ class ChunkingAgent(AgentBaseModel):
         # Loop back to validation after fixing
         graph.add_edge("fix_gaps", "validate_chunks")
 
-        return graph.compile()
+        compiled_graph = graph.compile()
+
+        return compiled_graph
 
     async def run(self, document: str, **kwargs) -> dict[str, Any]:
         """
@@ -301,32 +347,21 @@ class ChunkingAgent(AgentBaseModel):
             - chunks: List of Chunk objects
             - validation_errors: Any remaining validation errors (if max retries reached)
             - retry_count: Number of fix attempts made
+
+        Raises:
+            ValueError: If document is None or empty
+            Exception: If graph execution fails
         """
-        logger.info("Starting document chunking", extra={
-            "extra_fields": {
-                "document_length": len(document),
-                "total_lines": len(document.split('\n')),
-                "agent": self.name
-            }
-        })
+        # Validate input
+        if document is None or not document.strip():
+            raise ValueError("Document cannot be empty or None")
 
         # Create initial state and invoke graph
         state = ChunkingAgentState(input_text=document)
         result = await self.graph.ainvoke(state)
-
-        # Log final results
-        logger.info("Chunking complete", extra={
-            "extra_fields": {
-                "chunks_generated": len(result.get("chunks", [])),
-                "retry_count": result.get("retry_count", 0),
-                "has_errors": len(result.get("validation_errors", [])) > 0
-            }
-        })
 
         return {
             "chunks": result.get("chunks", []),
             "validation_errors": result.get("validation_errors", []),
             "retry_count": result.get("retry_count", 0)
         }
-
-
