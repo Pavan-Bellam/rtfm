@@ -373,3 +373,21 @@ async def number_files(files_list: list[Path] | None = None, files_dir: str | No
 
 
 
+def extract_line_range(text: str, start_line: int, end_line: int) -> str:
+        """
+        Extract a specific line range from text with line numbers.
+
+        Args:
+            text: The full input text
+            start_line: Starting line number (inclusive, 1-indexed)
+            end_line: Ending line number (inclusive, 1-indexed)
+
+        Returns:
+            Extracted text with line numbers formatted as #N: content
+        """
+        lines = text.split('\n')
+        extracted = []
+        for i in range(start_line - 1, min(end_line, len(lines))):
+            extracted.append(f"#{i+1}: {lines[i]}")
+        return '\n'.join(extracted)
+
