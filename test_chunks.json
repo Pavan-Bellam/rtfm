@@ -1,0 +1,242 @@
+[
+  {
+    "id": "f2958455-14d8-4534-ba63-25b355f947f2",
+    "questions": [
+      "How do I set a named AWS profile in the Terraform aws provider?",
+      "How can I specify custom shared_config_files and shared_credentials_files paths in provider?",
+      "What's the syntax to include multiple shared_credentials_files in the aws provider?"
+    ]
+  },
+  {
+    "id": "a59786f3-04f5-454e-a93a-9dbb7eb631cf",
+    "questions": [
+      "How do I use container credentials for Terraform in ECS with IAM Task Roles?",
+      "How can I enable web identity by setting AWS_ROLE_ARN and AWS_WEB_IDENTITY_TOKEN_FILE?",
+      "How do I configure Terraform in CodeBuild to source container credentials?"
+    ]
+  },
+  {
+    "id": "d05ca059-6457-4fc6-854a-2c5f3744176b",
+    "questions": [
+      "How do I configure the AWS provider to assume an IAM role?",
+      "What parameters does the assume_role block support in the AWS provider?",
+      "What's the syntax to chain multiple role assumptions across accounts?"
+    ]
+  },
+  {
+    "id": "51eefcc7-a81a-4a99-a21e-20edf4498851",
+    "questions": [
+      "How do I configure assume_role_with_web_identity in the AWS provider?",
+      "What's the syntax to set role_arn, session_name, and web_identity_token_file?",
+      "How can I provide a web_identity_token instead of using web_identity_token_file?"
+    ]
+  },
+  {
+    "id": "24b875c3-e3b2-43a5-9021-ff5ab780926e",
+    "questions": [
+      "How can I enable FIPS endpoints for all services via environment variables?",
+      "What\u2019s the syntax to configure assume_role_with_web_identity in the AWS provider?",
+      "What parameters does the endpoints provider argument accept for per-service overrides?"
+    ]
+  },
+  {
+    "id": "715dfb94-d943-4a08-b201-d9e2027a3f49",
+    "questions": [
+      "How do I create an agent with create_agent, model, and system prompt?",
+      "What\u2019s the syntax to invoke the agent with a user message?",
+      "How can I structure messages with role and content for agent.invoke?"
+    ]
+  },
+  {
+    "id": "ebde6d8c-5675-4ada-9b69-6849b48eb9be",
+    "questions": [
+      "How do I add an \"Edit the source of this page on GitHub\" footer link?",
+      "How can I display the disclaimer that AI responses may contain mistakes?",
+      "How can I link to the LangChain v1 releases page from the footer?"
+    ]
+  },
+  {
+    "id": "2ccb9d53-0e45-48dd-8b40-b48710032e85",
+    "questions": [
+      "How do I set environment variables to authenticate OpenAI and Anthropic models?",
+      "How can I catch and handle MODEL_AUTHENTICATION errors in LangChainJS?",
+      "What\u2019s the syntax to pass an API key to a model constructor?"
+    ]
+  },
+  {
+    "id": "58b95a0f-0003-40fe-9b9a-1bc1f29c1a80",
+    "questions": [
+      "How do I display the assistant disclaimer text in my UI?",
+      "What\u2019s the exact disclaimer string for AI-generated assistant responses?",
+      "How can I label the assistant section and show the AI disclaimer?"
+    ]
+  },
+  {
+    "id": "57140fcb-acc6-48d1-97a9-99d9143228ad",
+    "questions": [
+      "How do I link to the Integrations provider overview in code?",
+      "What\u2019s the URL for the LangChain v1 migration guide?",
+      "How can I programmatically link to the Python quickstart page?"
+    ]
+  },
+  {
+    "id": "90398ac5-b82e-436a-8008-0156e15dba22",
+    "questions": [
+      "What's the syntax to install or upgrade LangChain via pip?",
+      "How do I install LangChain before starting to code?",
+      "How can I install LangChain for my Python project?"
+    ]
+  },
+  {
+    "id": "c47d2817-1719-43c7-8409-caa4ef150651",
+    "questions": [
+      "How do I enable LangChain tracing in Python?",
+      "How do I log traces to a project?",
+      "How do I add metadata to traces?"
+    ]
+  },
+  {
+    "id": "0c9a3619-e42c-4df7-ae23-dea66e887550",
+    "questions": [
+      "How do I enable LangSmith tracing for create_agent runs?",
+      "What\u2019s the syntax to set LANGCHAIN_TRACING_V2, LANGCHAIN_API_KEY, and LANGCHAIN_PROJECT?",
+      "How can I configure a custom LangSmith tracing endpoint?"
+    ]
+  },
+  {
+    "id": "e5b67490-324e-41b7-89ac-b38ebd37a2de",
+    "questions": [
+      "How do I enable LangSmith tracing using environment variables?",
+      "What's the syntax to set LANGSMITH_TRACING and LANGSMITH_API_KEY?",
+      "How can I obtain the LangSmith API key for tracing?"
+    ]
+  },
+  {
+    "id": "a985b2bd-9e49-4547-9424-fa0faf8cd8d9",
+    "questions": [
+      "How do I use traces to debug, evaluate, and monitor agents?",
+      "How can I connect LangChain documentation programmatically from my application?",
+      "How do I access the LangChain UI for observability?"
+    ]
+  },
+  {
+    "id": "f1546dc1-7365-4a0a-95d2-16722cd0f760",
+    "questions": [
+      "How do I build a basic agent in LangChain?",
+      "How can I build a real-world agent using LangChain?",
+      "How do I get started building an agent with the quickstart?"
+    ]
+  },
+  {
+    "id": "d73d75ac-3343-4bf4-bf31-e44a96e249be",
+    "questions": [
+      "How do I enable tool visualization in the Agent Chat UI?",
+      "How can I use time-travel debugging for agent runs in the UI?",
+      "How do I integrate human-in-the-loop approvals in Agent Chat UI?"
+    ]
+  },
+  {
+    "id": "8fd5aaed-a9a0-4261-8e77-60ffa0dbc821",
+    "questions": [
+      "How do I create an agent with tools and a system_prompt?",
+      "What's the syntax to pass the send_email tool to create_agent?",
+      "How can I implement the send_email tool function used by the agent?"
+    ]
+  },
+  {
+    "id": "9860ec33-15c3-43a3-9472-473055e52af1",
+    "questions": [
+      "What\u2019s the syntax to install LangGraph app dependencies in editable mode?",
+      "How do I install project dependencies from the repository root?",
+      "How can I install dependencies with pip in editable mode?"
+    ]
+  },
+  {
+    "id": "e055e5f6-2d09-4655-9922-e3ba8a2007c8",
+    "questions": [
+      "How do I define a tool with a Pydantic args_schema using @tool?",
+      "What parameters does Tool.from_function support when wrapping a callable?",
+      "What's the syntax to create an async tool with a coroutine?"
+    ]
+  },
+  {
+    "id": "d6794d75-3750-488d-85b4-acd8c09e6ddd",
+    "questions": [
+      "How do I attach a Pydantic args_schema to a tool function?",
+      "What parameters does get_weather accept, and their expected types?",
+      "What's the syntax for WeatherInput and get_weather with include_forecast support?"
+    ]
+  },
+  {
+    "id": "f66cb54b-cd35-4424-8e82-01b167bf2ff8",
+    "questions": [
+      "What's the syntax to add ToolRuntime to a LangChain tool function?",
+      "How do I access conversation state and user preferences via ToolRuntime?",
+      "What parameters does ToolRuntime expose, like store, stream writer, config, call ID?"
+    ]
+  },
+  {
+    "id": "d59d8599-7a45-4cbb-9053-e8a3194f7fdc",
+    "questions": [
+      "How do I stream progress updates from a tool using runtime.stream_writer?",
+      "What's the syntax to emit messages with stream_writer during tool execution?",
+      "How can I use Stream Writer within a LangGraph execution context?"
+    ]
+  },
+  {
+    "id": "e0b8cec0-c1fa-4333-9c0b-eaaef4faa9a6",
+    "questions": [
+      "How do I get started implementing LangChain according to the Quickstart?",
+      "How can I access advanced usage guidance for implementing chains and agents?",
+      "How do I find core components needed to implement LangChain features?"
+    ]
+  },
+  {
+    "id": "8a67f4b3-7706-44d5-a219-b1630f1fe7b7",
+    "questions": [
+      "How can I add guardrails to a LangChain agent or chain?",
+      "How do I implement human-in-the-loop feedback in a LangChain workflow?",
+      "How can I integrate long-term memory into a retrieval workflow?"
+    ]
+  },
+  {
+    "id": "dcce6556-5bce-47bd-994a-55030751fc80",
+    "questions": [
+      "How can I deploy a LangChain app using the Deploy capability?",
+      "How do I enable Observability for production LangChain agents?",
+      "How do I use Studio and Test before production deployment?"
+    ]
+  },
+  {
+    "id": "2c3ecd5c-c0f4-42c2-8e60-b169c04b526e",
+    "questions": [
+      "How do I define a tool with the @tool decorator in LangChain?",
+      "What's the syntax for injecting ToolRuntime into a tool function?",
+      "How can I access user location via ToolRuntime inside a tool?"
+    ]
+  },
+  {
+    "id": "2934055d-303f-4f4d-90d5-65bb402bd234",
+    "questions": [
+      "How do I define a structured response model with punny_response and weather_conditions?",
+      "What's the syntax for an optional string field defaulting to None?",
+      "How can I type fields like temperature: float and forecast: str in the schema?"
+    ]
+  },
+  {
+    "id": "98039d3f-119b-4cb2-bdd1-e8f13c867dc5",
+    "questions": [
+      "How do I convert text into vectors and store and search them?",
+      "How can I split large documents into chunks before embedding and storage?",
+      "How can I return documents given an unstructured query using retrievers?"
+    ]
+  },
+  {
+    "id": "b5ca7509-cfe2-433f-8488-3af23af88834",
+    "questions": [
+      "How do I implement query enhancement within a Hybrid RAG workflow?",
+      "How can I add retrieval and answer validation steps to Hybrid RAG?",
+      "How do I run Hybrid RAG iteratively to refine answers?"
+    ]
+  }
+]
